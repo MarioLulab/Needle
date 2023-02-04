@@ -19,17 +19,17 @@ Needle是一个微型的深度学习框架，是一个由  [CMU 10-414/714](http
 
 -  `apps/`：经典网络实现和训练代码
 - `data/`: 数据集存放的文件夹
-- `python/`
-        |__ `needle/`
-                     |__ `backend/`: 定义了具有一般性的 `NDArray` 类，规定了数据存取方式，支持不同类型的后端计算设备，比如numpy, native CPU, CUDA等。
-                     |__ `utils/`: 包含Dataset和Dataloader代码
-        |__ `autograd.py`: 定义了基本的动态计算图框架和自动微分框架
-        |__ `init.py`: 深度学习中常见的参数初始化
-        |__ `nn.py`: 模块化的神经网络库，提供了高层次的神经网络抽象
-        |__ `ops.py`: 各类可自动求导的算子实现
-        |__ `optim.py`: 神经网络优化器实现
-- `src/`: Needle中Tensor的硬件加速后端代码，包括native CPU 和 CUDA
-- `tests/`: 测试文件
+- `python/` \
+  &emsp;&emsp;|__ `needle/` \
+  &emsp;&emsp;&emsp;&emsp;|__ `backend/`: 定义了具有一般性的 `NDArray` 类，规定了数据存取方式，支持不同类型的后端计算设备，比如numpy, CUDA。\
+  &emsp;&emsp;&emsp;&emsp;|__ `utils/`: 包含Dataset和Dataloader代码 \
+  &emsp;&emsp;|__ `autograd.py`: 定义了基本的动态计算图框架和自动微分框架 \
+  &emsp;&emsp;|__ `init.py`: 深度学习中常见的参数初始化 \
+  &emsp;&emsp;|__ `nn.py`: 模块化的神经网络库，提供了高层次的神经网络抽象 \
+  &emsp;&emsp;|__ `ops.py`: 各类可自动求导的算子实现 \
+  &emsp;&emsp;|__ `optim.py`: 神经网络优化器实现 \
+- `src/`: Needle中Tensor的硬件加速后端代码，包括native CPU 和 CUDA 
+- `tests/`: 测试文件 
 
 ## Needle内部机制
 
