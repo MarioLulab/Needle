@@ -3,15 +3,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <stdio.h>
-#include <unistd.h>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <numeric>
 #include <cmath>
-#include <math.h>
 #include <vector>
+#include "utilities/memory_pool.h"
+#include "utilities/singleton.h"
 namespace needle {
 namespace cuda {
 
@@ -27,15 +26,28 @@ typedef ssize_t ptrdiff_t;
 
 struct CudaArray {
   CudaArray(const size_t size) {
-    cudaError_t err = cudaMalloc(&ptr, size * ELEM_SIZE);
-    if (err != cudaSuccess) throw std::runtime_error(cudaGetErrorString(err));
+    needle::singleton::Singleton<needle::cuda::utilities::GpuMemoryPool>::instance().mallocBlock(size * ELEM_SIZE, m_gpuMemoryBlock);
     this->size = size;
+    // ptr = (scalar_t*)((void*)(m_gpuMemoryBlock.data));
+    ptr = reinterpret_cast<scalar_t*>(m_gpuMemoryBlock.data);
+
+    #ifdef MEMORY_POOL_DEBUG
+    printf("CudaArray() : m_gpuMemoryBlock.data = 0x%lx, m_gpuMemoryBlock.size = 0x%lx, ptr = 0x%lx, size = 0x%lx\n", m_gpuMemoryBlock.data, m_gpuMemoryBlock.size, this->ptr, this->size);
+    #endif
   }
-  ~CudaArray() { cudaFree(ptr); }
+  ~CudaArray() {
+    #ifdef MEMORY_POOL_DEBUG
+    printf("~CudaArray() : m_gpuMemoryBlock.data = 0x%lx, m_gpuMemoryBlock.size = 0x%lx, ptr = 0x%lx, size = 0x%lx\n", m_gpuMemoryBlock.data, m_gpuMemoryBlock.size, this->ptr, this->size);
+    #endif
+
+    needle::singleton::Singleton<needle::cuda::utilities::GpuMemoryPool>::instance().freeBlock(m_gpuMemoryBlock);
+    ptr = nullptr;
+  }
   size_t ptr_as_int() { return (size_t)ptr; }
   
   scalar_t* ptr;
   size_t size;
+  needle::cuda::utilities::GpuMemoryBlock m_gpuMemoryBlock;
 };
 
 struct CudaDims {
@@ -633,7 +645,7 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
     scalar_t* host_ptr = (scalar_t*)std::malloc(a.size * ELEM_SIZE);
     if (host_ptr == 0) throw std::bad_alloc();
     cudaError_t err = cudaMemcpy(host_ptr, a.ptr, a.size * ELEM_SIZE, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess) throw std::runtime_error(cudaGetErrorString(err));
+    if (err != cudaSuccess) throw std::runtime_error(std::string("to_numpy") + cudaGetErrorString(err));
 
     // return numpy array
     py::capsule deallocate_buffer(host_ptr, [](void* p) { free(p); });
@@ -642,9 +654,12 @@ PYBIND11_MODULE(ndarray_backend_cuda, m) {
 
   // copy numpy array to GPU
   m.def("from_numpy", [](py::array_t<scalar_t> a, CudaArray* out) {
-    cudaError_t err =
-        cudaMemcpy(out->ptr, a.request().ptr, out->size * ELEM_SIZE, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess) throw std::runtime_error(cudaGetErrorString(err));
+    #ifdef MEMORY_POOL_DEBUG
+    printf("from_numpy() : out->m_gpuMemoryBlock.data = 0x%lx, out->ptr = 0x%lx, size = 0x%lx\n", out->m_gpuMemoryBlock.data, out->ptr, out->size);
+    #endif
+
+    cudaError_t err = cudaMemcpy(out->ptr, a.request().ptr, (out->size) * ELEM_SIZE, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) throw std::runtime_error(std::string("from_numpy") + cudaGetErrorString(err));
   });
 
   m.def("fill", Fill);
