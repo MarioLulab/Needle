@@ -6,19 +6,72 @@ Needle是一个微型的深度学习框架，是一个由  [CMU 10-414/714](http
 
 ## 安装
 
-- TO DO
+操作系统：Ubuntu
+
+Python >= 3.7.5
+
+CUDA >= 8.0
+
+- 从源码安装
+
+  * 获取源码
+
+    ```bash
+    git clone https://github.com/MarioLulab/Needle.git
+    ```
+
+  * 编译
+
+    ```bash
+    cd needle
+    mkdir build && cd build
+    cmake .. && make -j `nproc`
+    # enjoy it now
+    ```
+
+- 将 Needle 作为package进行安装
+
+  ```bash
+  cd python
+  python setup.py install --user
+  # enjoy it now
+  ```
+
+  
 
 ## Quick Start
 
 ​	因为Needle具备了一个深度学习框架所具备的基本特征，所以你可以使用该框架开发和训练自己的深度学习网络。可以查看`apps/`目录下的文件，笔者实现了一些经典的深度学习网络，以下的示例可以帮助你更快的了解Needle的使用：
 
 * 在Penn Treebank Dataset上训练 RNN 或 LSTM 网络
+
 * 在Cifar-10 Dataset上训练 ResNet-9 网络
+
+* 加速常见线性代数运算：
+
+  ```python
+  import needle as ndl
+  
+  device = ndl.cuda()	# using CUDA as acceleration backend
+  tensor_a = ndl.init.randn(3,5, device=device)	# define a tensor on CUDA
+  tensor_b = ndl.init.randn(3,5, device=device)
+  
+  # element-wise add
+  add_result = tensor_a + tensor_b
+  
+  # matrix multiplication
+  matmul_result = tensor_a @ tensor_b.transpose()
+  
+  # have fun with Needle
+  ```
+
+  
 
 ## 目录
 
 -  `apps/`：经典网络实现和训练代码
 - `data/`: 数据集存放的文件夹
+- `3rdparty/`: 第三方库
 - `python/` \
   &emsp;&emsp;|__ `needle/` \
   &emsp;&emsp;&emsp;&emsp;|__ `backend/`: 定义了具有一般性的 `NDArray` 类，规定了数据存取方式，支持不同类型的后端计算设备，比如numpy, CUDA。\
@@ -70,7 +123,6 @@ Needle是一个微型的深度学习框架，是一个由  [CMU 10-414/714](http
 
   Needle 使用反向自动微分机制构建来求解计算图中Tensor的梯度。具体来说，当你调用 `loss.backward()` 时，Needle 会找到动态计算图的拓扑排序，并从后往前根据链式求导法则求出各个Tensor的梯度。每个 op 都定义了前向计算的`compute` 方法和求解梯度的`gradient` 方法，当计算到某个 Tensor 的梯度时，依次利用链式求导法则和全微分法则将部分导数值累加到当前梯度上。
   
-
 * #### 模块化神经网络组件
 
   Needle 同样提供了具有高层接口的神经网络库，该库中包含了基本的深度学习组件。在**模型表达方面**每个 `nn.Module` 遵循 “tensor in, tensor out” 的准则，这样一个模块的输入就可以当作另一个模块的输出，进一步组合形成复杂的神经网络。同时，对于**损失函数**和**优化方法**，Needle 也提供了相应模块，便于开发者快速迭代和验证模型。Needle 模块化的神经网络组件如下图。
