@@ -290,8 +290,7 @@ if __name__ == "__main__":
     train_dataset = ndl.utils.data.CIFAR10Dataset("./data/cifar-10-batches-py", train=True)
     train_dataloader = ndl.data.DataLoader(\
             dataset=train_dataset,
-            # batch_size=128,
-            batch_size=1024,
+            batch_size=32,
             shuffle=True,
             device=device
             )
@@ -299,7 +298,7 @@ if __name__ == "__main__":
     val_dataset = ndl.data.CIFAR10Dataset("./data/cifar-10-batches-py", train=False)
     val_dataloader = ndl.data.DataLoader(
         dataset=val_dataset,
-        batch_size=128,
+        batch_size=32,
         shuffle=False,
         device=device        
     )
